@@ -8,10 +8,6 @@ abstract class RemoteDatasource {
       {Map<String, dynamic>? query, Map<String, dynamic>? headers});
   Future<dynamic> post(String url, dynamic data,
       {Map<String, dynamic>? headers});
-  Future<dynamic> patch(String url, dynamic data,
-      {Map<String, dynamic>? query, Map<String, dynamic>? headers});
-  Future<dynamic> delete(String url, dynamic data,
-      {Map<String, dynamic>? query, Map<String, dynamic>? headers});
 }
 
 var validStatusCodes = List.generate(100, (i) => 200 + i);
@@ -85,39 +81,6 @@ class RemoteDatasourceImpl implements RemoteDatasource {
     }
   }
 
-  @override
-  Future patch(String addurl, data,
-      {Map<String, dynamic>? query, Map<String, dynamic>? headers}) async {
-    var options = addHeadersToOptions(headers);
-    try {
-      var res = await _dio.patch(addurl,
-          queryParameters: query, data: data, options: options);
-      if (!validStatusCodes.contains(res.statusCode)) {
-        return ResponseResult.error;
-      }
-      return res;
-    } catch (e) {
-      Logger().e("$addurl\n$data\n$e");
-      return ResponseResult.error;
-    }
-  }
-
-  @override
-  Future delete(String addurl, data,
-      {Map<String, dynamic>? query, Map<String, dynamic>? headers}) async {
-    var options = addHeadersToOptions(headers);
-    try {
-      var res =
-          await _dio.delete(addurl, options: options, queryParameters: query);
-      if (!validStatusCodes.contains(res.statusCode)) {
-        return ResponseResult.error;
-      }
-      return res;
-    } catch (e) {
-      Logger().e("$addurl\n$e");
-      return ResponseResult.error;
-    }
-  }
 
   Options addHeadersToOptions(Map<String, dynamic>? additionalHeaders) {
     Map<String, dynamic> mergedHeaders = {
@@ -135,11 +98,11 @@ class RemoteDatasourceImpl implements RemoteDatasource {
     final prefs = await SharedPreferences.getInstance();
     try {
       final refreshToken = prefs.get('refreshtoken') ?? '';
-      final Map<String, dynamic> tokenheaders = {
+      final Map<String, dynamic> tokenHeaders = {
         'x-refresh-token': refreshToken
       };
       final response =
-          await get('/auth/restoreAccessToken', headers: tokenheaders);
+          await get('/auth/restoreAccessToken', headers: tokenHeaders);
       if (response != null) {
         Logger().d(response);
         Map<String, dynamic> resData = response.data;
