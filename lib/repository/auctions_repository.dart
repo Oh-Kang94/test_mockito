@@ -15,26 +15,24 @@ enum Url {
 
 class AuctionsRepositoryImpl implements AuctionsRepository {
   final RemoteDatasource _datasource;
+  final Logger _logger = Logger();
 
-  AuctionsRepositoryImpl({required RemoteDatasource remoteDatasource})
-      : _datasource = remoteDatasource;
+  AuctionsRepositoryImpl({
+    required RemoteDatasource remoteDatasource,
+  }) : _datasource = remoteDatasource;
 
   @override
   Future<List<Auction>> getAuctionList() async {
-    late List<Auction> result;
-    final String addUrl = Url.getAuctionList.value;
     try {
-      var response = await _datasource.get(addUrl);
+      var response = await _datasource.get(Url.getAuctionList.value);
       if (response != null && response.data != null) {
         List<dynamic> responseData = response.data["result"];
-        result = responseData.map((json) => Auction.fromJson(json)).toList();
-        print(result);
-        return result;
+        return responseData.map((json) => Auction.fromJson(json)).toList();
       } else {
         throw Exception("Invalid response");
       }
     } catch (e) {
-      Logger().e("$addUrl \n $e");
+      _logger.e("${Url.getAuctionList} \n $e");
       throw Exception("Can't get AuctionList");
     }
   }
