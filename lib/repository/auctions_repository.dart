@@ -25,10 +25,14 @@ class AuctionsRepositoryImpl implements AuctionsRepository {
     final String addUrl = Url.getAuctionList.value;
     try {
       var response = await _datasource.get(addUrl);
-      Logger().d(response);
-      List<dynamic> responseData = response.data["result"];
-      result = responseData.map((json) => Auction.fromJson(json)).toList();
-      return result;
+      if (response != null && response.data != null) {
+        List<dynamic> responseData = response.data["result"];
+        result = responseData.map((json) => Auction.fromJson(json)).toList();
+        print(result);
+        return result;
+      } else {
+        throw Exception("Invalid response");
+      }
     } catch (e) {
       Logger().e("$addUrl \n $e");
       throw Exception("Can't get AuctionList");
