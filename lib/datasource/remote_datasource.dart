@@ -4,15 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_mockito/url.dart';
 
 abstract class RemoteDatasource {
-  Future<dynamic> get(String url,
+  Future<Response> get(String url,
       {Map<String, dynamic>? query, Map<String, dynamic>? headers});
-  Future<dynamic> post(String url, dynamic data,
+  Future<Response> post(String url, dynamic data,
       {Map<String, dynamic>? headers});
 }
 
 var validStatusCodes = List.generate(100, (i) => 200 + i);
-
-enum ResponseResult { error, success }
 
 class RemoteDatasourceImpl implements RemoteDatasource {
   late Dio _dio;
@@ -49,38 +47,43 @@ class RemoteDatasourceImpl implements RemoteDatasource {
   }
 
   @override
-  Future<dynamic> get(String addurl,
+  Future<Response> get(String addurl,
       {Map<String, dynamic>? query, Map<String, dynamic>? headers}) async {
     var options = addHeadersToOptions(headers);
     try {
       var res =
           await _dio.get(addurl, options: options, queryParameters: query);
       if (!validStatusCodes.contains(res.statusCode)) {
-        return ResponseResult.error;
+        throw DioException(
+          requestOptions: res.requestOptions,
+          error: 'Invalid status code: ${res.statusCode}',
+        );
       }
       return res;
     } catch (e) {
       Logger().e("$addurl\n$e");
-      return ResponseResult.error;
+      rethrow;
     }
   }
 
   @override
-  Future post(String addurl, dynamic data,
+  Future<Response> post(String addurl, dynamic data,
       {Map<String, dynamic>? headers}) async {
     var options = addHeadersToOptions(headers);
     try {
       var res = await _dio.post(addurl, options: options, data: data);
       if (!validStatusCodes.contains(res.statusCode)) {
-        return ResponseResult.error;
+        throw DioException(
+          requestOptions: res.requestOptions,
+          error: 'Invalid status code: ${res.statusCode}',
+        );
       }
       return res;
     } catch (e) {
       Logger().e("$addurl\n$e");
-      return ResponseResult.error;
+      rethrow;
     }
   }
-
 
   Options addHeadersToOptions(Map<String, dynamic>? additionalHeaders) {
     Map<String, dynamic> mergedHeaders = {
@@ -103,14 +106,11 @@ class RemoteDatasourceImpl implements RemoteDatasource {
       };
       final response =
           await get('/auth/restoreAccessToken', headers: tokenHeaders);
-      if (response != null) {
-        Logger().d(response);
-        Map<String, dynamic> resData = response.data;
-        String? accessToken = resData["data"];
-        if (await prefs.setString('accesstoken', accessToken!) == true) {
-          return accessToken;
-        }
-        return null;
+      Logger().d(response);
+      Map<String, dynamic> resData = response.data;
+      String? accessToken = resData["data"];
+      if (await prefs.setString('accesstoken', accessToken!) == true) {
+        return accessToken;
       }
       return null;
     } catch (e) {

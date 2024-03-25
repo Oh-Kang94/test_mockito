@@ -24,6 +24,7 @@ class AuctionsRepositoryImpl implements AuctionsRepository {
   @override
   Future<List<Auction>> getAuctionList() async {
     try {
+      print(Url.getAuctionList.value);
       var response = await _datasource.get(Url.getAuctionList.value);
       if (response != null && response.data != null) {
         List<dynamic> responseData = response.data["result"];
